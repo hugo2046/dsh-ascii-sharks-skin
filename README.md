@@ -2,11 +2,15 @@
 
 让 ASCII 鲨鱼游过 DeepSeek Harness 的聊天窗口。打开新会话，能看见字符拼成的鲨鱼和成群的小鱼。切换 DSH 主题时，水面在纸白和炭黑之间切换。
 
-| 浅色 · 新会话 | 深色 · 新会话 |
-| :---: | :---: |
-| [![浅色新会话实窗，灰色字符鲨鱼游过纸白水面](docs/images/new-chat-light.png)](docs/images/new-chat-light.png) | [![深色新会话实窗，青灰色字符勾出炭黑水面上的鲨鱼](docs/images/new-chat-dark.png)](docs/images/new-chat-dark.png) |
+**深色 · 新会话**
 
-两图均为实窗局部，工作区名称已替换。点击图片可查看大图。
+[![深色新会话实窗，字符鲨鱼环绕标题和输入框](docs/images/new-chat-dark.png)](docs/images/new-chat-dark.png)
+
+**浅色 · 新会话**
+
+[![浅色新会话实窗，纸白水面上的字符鲨鱼与鱼群](docs/images/new-chat-light.png)](docs/images/new-chat-light.png)
+
+点击截图可查看原始分辨率。
 
 首页按钮会柔化背后的鱼身字符。进入聊天后，鱼群仍可穿过消息区，两侧动画以 34% 不透明度显示，正文列内约为 12%，水域止于输入框上沿。
 
