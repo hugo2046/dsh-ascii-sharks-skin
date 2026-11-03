@@ -19,7 +19,9 @@ export function isLightTheme() { return lightTheme; }
 /** 0..255 明度：暗色照用，浅色取反。 */
 const lv = (v: number) => (lightTheme ? 255 - v : v);
 /** 画布底色。 */
-const paperColor = () => (lightTheme ? "#fcfcfb" : "#000");
+// 聊天叠层用白或黑作为混合底色，首页使用宿主指定的水色。
+const paperColor = (canvas: HTMLCanvasElement) =>
+  getComputedStyle(canvas).getPropertyValue("--sharks-water").trim() || (lightTheme ? "#fff" : "#000");
 
 const ALPHA_LEVELS = 6;
 const FISH_ALPHAS = [0.28, 0.42, 0.58, 0.74, 0.9];
@@ -35,7 +37,7 @@ const DOT_RGB: [number, number, number][] = [
 const DOT_BASE_ALPHA = [1, 1, 1, 1, 1];
 const WAKE = DOT_RGB.length - 1;
 
-const ACCENTS = ["#e0892c", "#e03a32", "#b44ae0", "#33c8cc", "#3cb54a", "#3150e8", "#d9c14a"];
+const ACCENTS = ["#568480", "#739893", "#65918e"];
 
 // Sparse glyphs on bright skin, dense glyphs in shadow, so the texture
 // reinforces the shading instead of fighting it.
@@ -262,7 +264,7 @@ function inTriangle(
 /** Visible dark-grey cell grid, snapped to device pixels. Shared with the sidebar backdrop. */
 export function paintGrid(g: CanvasRenderingContext2D, W: number, H: number, cw: number, ch: number, dpr: number) {
   g.setTransform(1, 0, 0, 1, 0, 0);
-  g.strokeStyle = lightTheme ? "rgba(23,26,28,0.022)" : "rgba(255,255,255,0.055)";
+  g.strokeStyle = lightTheme ? "rgba(23,26,28,0.013)" : "rgba(255,255,255,0.030)";
   g.lineWidth = 1;
   g.beginPath();
   for (let c = 0; c <= Math.ceil(W / cw); c++) {
@@ -411,7 +413,7 @@ export class AsciiRenderer {
     if (!g) return;
     const { width: W, height: H, dpr, cw, ch } = this;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.fillStyle = paperColor();
+    g.fillStyle = paperColor(this.canvas);
     g.fillRect(0, 0, W, H);
     paintGrid(g, W, H, cw, ch, dpr);
   }
@@ -791,13 +793,13 @@ export class AsciiRenderer {
         if (lightTheme) {
           // 纸面上，轮廓要淡淡地散开，而不是铺一圈小黑点
           const a = (0.10 + shade * 0.26) * dim;
-          ctx.fillStyle = roll < 0.07
+          ctx.fillStyle = roll < 0.015
             ? ACCENTS[key % ACCENTS.length]
             : `rgba(22,26,32,${a.toFixed(3)})`;
         } else {
           const g = (70 + shade * 80) * dim;
           ctx.fillStyle =
-            roll < 0.07
+            roll < 0.015
               ? ACCENTS[key % ACCENTS.length]
               : `rgb(${Math.round(g * tr)},${Math.round(g * tg)},${Math.min(255, Math.round(g * tb + 6))})`;
         }
@@ -827,7 +829,7 @@ export class AsciiRenderer {
       level *= dim;
       // Tinted per species; the classic tint is a cool blue-grey, like a back seen through deep water.
       // 保留深色底块与浅色刻字，雾化交给界面局部遮罩，避免重复压缩灰阶。
-      const bl = lightTheme ? 244 - level * 0.72 : level;
+      const bl = lightTheme ? 232 - level * 0.69 : 16 + level * (flag === FLAG_RIDGE ? 0.88 : 0.72);
       const tt = (t: number) => (lightTheme
         ? Math.min(1.04, Math.max(0.96, t))
         : Math.min(1.08, Math.max(0.86, t)));
@@ -844,7 +846,7 @@ export class AsciiRenderer {
           : Math.round(level);
         const g = (flag === FLAG_EYE) ? "#8d8880"
           : (flag === FLAG_MARK) ? `rgb(${Math.round(inkG * 0.8)},${Math.round(inkG * 0.8)},${Math.round(inkG * 0.8)})`
-          : roll < (lightTheme ? 0.025 : 0.09) ? ACCENTS[key % ACCENTS.length]
+          : roll < 0.025 ? ACCENTS[key % ACCENTS.length]
           : `rgb(${inkG},${inkG},${inkG})`;
         ctx.fillStyle = g;
         ctx.fillText(glyph, x + cw / 2, y + ch / 2 + 1);
@@ -855,8 +857,8 @@ export class AsciiRenderer {
       const mk = lightTheme ? 116 : lv(70);
       if (flag === FLAG_EYE) color = lightTheme ? "#9d988f" : "#9aa0ad";
       else if (flag === FLAG_MARK) color = `rgb(${Math.round(mk * tr)},${Math.round(mk * tg)},${Math.round(mk * tb)})`;
-      else if (roll < 0.09) color = ACCENTS[key % ACCENTS.length];
-      else if (roll < 0.13) color = lightTheme ? "#c9c4b9" : "#ffffff";
+      else if (roll < 0.025) color = ACCENTS[key % ACCENTS.length];
+      else if (roll < 0.042) color = lightTheme ? "#c9c4b9" : "#ffffff";
       else color = lightTheme
         ? `rgb(${ink},${ink},${ink})`
         : (shade > 0.55 ? "#0e0f13" : "#1b1d24");

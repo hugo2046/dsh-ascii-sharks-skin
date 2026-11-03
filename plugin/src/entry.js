@@ -12,36 +12,36 @@ const CSS = `
   .sharks-settings { display:grid; gap:14px; padding:18px; justify-items:start; color:inherit; }
   .sharks-settings :is(button,input,select) { font:inherit; color:inherit; background:var(--dsw-alias-bg-base); border:1px solid currentColor; padding:5px 10px; border-radius:6px; }
   .sharks-stage { position: relative; isolation: isolate; }
-  #${SEA_ID}, #${VEIL_ID} { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .sharks-home { --sharks-water:#101619; }
+  .sharks-home-light { --sharks-water:#f8f9f7; }
+  #${SEA_ID} { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
   #${SEA_ID} { z-index:-2; display:block;
     font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   #${SEA_ID}.sharks-chat {
     inset:0 auto auto 0; z-index:2; opacity:.34; mix-blend-mode:screen;
+    --sharks-reading-half:min(50%, calc(var(--dsh-chat-content-width, 748px) / 2));
+    mask-image:linear-gradient(to right, black calc(50% - var(--sharks-reading-half) - 48px),
+      rgb(0 0 0 / .36) calc(50% - var(--sharks-reading-half)),
+      rgb(0 0 0 / .36) calc(50% + var(--sharks-reading-half)),
+      black calc(50% + var(--sharks-reading-half) + 48px));
   }
   #${SEA_ID}.sharks-chat-light { mix-blend-mode:multiply; }
-  #${VEIL_ID} {
-    z-index:-1;
-    background: radial-gradient(ellipse 46% 30% at 50% 46%,
-      var(--sharks-veil-0) 0%, var(--sharks-veil-1) 30%, var(--sharks-veil-2) 58%,
-      var(--sharks-veil-3) 82%, transparent 100%);
+  .sharks-home [class$="_titleGroup"] { anchor-name:--sharks-title; }
+  .sharks-home .dsh-claude-home-panel { anchor-name:--sharks-stats; }
+  .sharks-home [data-composer-card] { anchor-name:--sharks-input; }
+  /* 只柔化按钮背后的鱼身字符，按钮间隙仍能看到水面。 */
+  .sharks-home :is(.kiGsTW_heroWorkspaceRow, [data-dsh-claude-part~="hero-workspace-row"]) :is(button, [role="button"]) {
+    backdrop-filter:blur(5px);
+  }
+  #${VEIL_ID} { display:contents; }
+  #${VEIL_ID} > i {
+    position:absolute; pointer-events:none; z-index:-1;
+    left:anchor(left); top:anchor(top); width:anchor-size(width, 0px); height:anchor-size(height, 0px);
+    background:var(--sharks-water); border-radius:10px; opacity:.92;
+    filter:drop-shadow(0 0 14px var(--sharks-water));
   }
 `;
-
-const VEILS = {
-  light: {
-    "--sharks-veil-0": "rgba(250,250,248,.96)",
-    "--sharks-veil-1": "rgba(250,250,248,.92)",
-    "--sharks-veil-2": "rgba(250,250,248,.66)",
-    "--sharks-veil-3": "rgba(250,250,248,.20)",
-  },
-  dark: {
-    "--sharks-veil-0": "rgba(8,11,15,.92)",
-    "--sharks-veil-1": "rgba(8,11,15,.86)",
-    "--sharks-veil-2": "rgba(8,11,15,.58)",
-    "--sharks-veil-3": "rgba(8,11,15,.16)",
-  },
-};
 
 /** 宿主底色是亮的还是暗的？读 body 的实际背景。 */
 function isLightSurface() {
@@ -88,7 +88,7 @@ function clearStage() {
   chatResize?.disconnect();
   engine?.destroy();
   engine = null;
-  stage?.classList.remove("sharks-stage");
+  stage?.classList.remove("sharks-stage", "sharks-home", "sharks-home-light");
   stage = null;
   document.getElementById(SEA_ID)?.remove();
   document.getElementById(VEIL_ID)?.remove();
@@ -115,8 +115,17 @@ function sync() {
   sea.setAttribute("aria-hidden", "true");
   const veil = document.createElement("div");
   veil.id = VEIL_ID;
-  for (const [k,v] of Object.entries(light ? VEILS.light : VEILS.dark)) veil.style.setProperty(k,v);
-  stage.prepend(sea, veil);
+  stage.classList.add("sharks-home");
+  stage.classList.toggle("sharks-home-light", light);
+  veil.setAttribute("aria-hidden", "true");
+  // 遮罩放在宿主控件之后，CSS 锚点会随控件布局及统计卡的出现自动更新。
+  for (const anchor of ["--sharks-title", "--sharks-stats", "--sharks-input"]) {
+    const patch = document.createElement("i");
+    patch.style.positionAnchor = anchor;
+    veil.append(patch);
+  }
+  stage.prepend(sea);
+  stage.append(veil);
   setLightTheme(light);
   setGlyphOnly(styles.active?.glyph ?? false);
   engine = new OceanEngine(sea, styles.active?.fish.slice(0, styles.active.count) ?? [{kind:"classic",size:1},{kind:"classic",size:.86},{kind:"tiger",size:.64}], "immersive");
