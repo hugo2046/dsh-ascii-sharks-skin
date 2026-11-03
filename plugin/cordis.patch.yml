@@ -1,0 +1,4 @@
+# dsh-sharks-skin：整页 ASCII 海洋皮肤。宿主半区是空的，全部在浏览器半区完成。
+- insert:
+    - id: sharks-skin
+      name: 'dsh-sharks-skin'
